@@ -1,15 +1,26 @@
-FROM ubuntu:18.04
+FROM tensorflow/tensorflow:latest-gpu-py3
+#FROM ubuntu:18.04
 
 MAINTAINER Loreto Parisi loretoparisi@gmail.com
 
 ########################################  BASE SYSTEM
-# set noninteractive installation
-ARG DEBIAN_FRONTEND=noninteractive
+# set noninteractive installation# Apt add py3.6
+#ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
 RUN apt-get update && apt-get install -y apt-utils
-RUN apt-get install -y --no-install-recommends \
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y\
     build-essential \
+    libopenblas-dev \
+    liblapack-dev \
+    python3.6-dev \
     pkg-config \
+    python3.6 \
     tzdata \
+    cmake \
+    gnupg \
     curl
 
 ######################################## PYTHON3
@@ -18,8 +29,15 @@ RUN apt-get install -y \
     python3-pip
 
 # set local timezone
-RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
+RUN ln -fs /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
+
+# Get cuda updated
+#RUN curl http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.1.168-1_amd64.deb > /tmp/cuda-repo.deb && \
+#    dpkg -i /tmp/cuda-repo.deb && \
+#    apt-get update; \
+#    apt-get install -y cuda-libraries-10-1 cuda
+#ENV PATH="/usr/local/cuda-10.1/bin:/usr/local/cuda-10.1/NsightCompute-2019-3:${PATH}"
 
 # transfer-learning-conv-ai
 ENV PYTHONPATH /usr/local/lib/python3.6 
