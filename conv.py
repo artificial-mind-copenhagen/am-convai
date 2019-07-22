@@ -4,8 +4,12 @@ import random
 from itertools import chain
 import torch
 import torch.nn.functional as F
-from pytorch_pretrained_bert import OpenAIGPTLMHeadModel, \
-    OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
+from pytorch_pretrained_bert import (
+    OpenAIGPTLMHeadModel,
+    OpenAIGPTTokenizer,
+    GPT2LMHeadModel,
+    GPT2Tokenizer,
+)
 from train import SPECIAL_TOKENS, build_input_from_segments
 from utils import get_dataset_personalities, download_pretrained_model
 from loguru import logger
@@ -14,7 +18,7 @@ from loguru import logger
 logger.info(f"Starting conv model with gpu: {torch.cuda.is_available()}")
 
 
-class ConversationalModel():
+class ConversationalModel:
     """ This will make sure the conversational model is hot and running once
     `InitModel()` has been called. """
 
@@ -37,8 +41,8 @@ class ConversationalModel():
         """
         self.args = {
             "device": "cuda" if torch.cuda.is_available() else "cpu",
-            "dataset_path": '',
-            "dataset_cache": './dataset_cache',
+            "dataset_path": "",
+            "dataset_cache": "./dataset_cache",
             "model": "gpt",
             "model_checkpoint": "",
             "max_history": 2,
@@ -48,15 +52,15 @@ class ConversationalModel():
             "seed": 42,
             "temperature": 0.7,
             "top_k": 0,
-            "top_p": 0.9
+            "top_p": 0.9,
         }
         self.args.update(kwargs)
         # This makes sure the default variables are set and updated in case of
-        # keyword arguments to the constructor. If this setup is too complicated
+        # keyword arguments to the constructor. If this setup is too complicate
         # maybe update self.__dict__ instead.
-        random.seed(self.args['seed'])
-        torch.random.manual_seed(self.args['seed'])
-        torch.cuda.manual_seed(self.args['seed'])
+        random.seed(self.args["seed"])
+        torch.random.manual_seed(self.args["seed"])
+        torch.cuda.manual_seed(self.args["seed"])
 
         # Finally. Status variables:
         self.is_ready = False
@@ -65,31 +69,27 @@ class ConversationalModel():
         """ This takes care of loading model/dataset/tokenizing. Can be called
         async or in a seperate thread so as to avoid loooong waiting time"""
         # Start with model and download pretrained if neccesary
-        if self.args['model_checkpoint'] == "":
-            self.args['model_checkpoint'] = download_pretrained_model()
+        if self.args["model_checkpoint"] == "":
+            self.args["model_checkpoint"] = download_pretrained_model()
         # do model setup and tokenize vocabulary
-        tokenizer_class = GPT2Tokenizer if \
-            self.args['model'] == "gpt2" else \
-            OpenAIGPTTokenizer
-        self.tokenizer = tokenizer_class.from_pretrained(
-            self.args['model_checkpoint']
-            )
+        tokenizer_class = (
+            GPT2Tokenizer if self.args["model"] == "gpt2" else OpenAIGPTTokenizer
+        )
+        self.tokenizer = tokenizer_class.from_pretrained(self.args["model_checkpoint"])
 
-        model_class = GPT2LMHeadModel if \
-            self.args["model"] == "gpt2" else \
-            OpenAIGPTLMHeadModel
-        self.model = model_class.from_pretrained(self.args['model_checkpoint'])
+        model_class = (
+            GPT2LMHeadModel if self.args["model"] == "gpt2" else OpenAIGPTLMHeadModel
+        )
+        self.model = model_class.from_pretrained(self.args["model_checkpoint"])
         self.model.to(self.args["device"])
         self.model.eval()
         personalities = get_dataset_personalities(
-            self.tokenizer,
-            self.args['dataset_path'],
-            self.args['dataset_cache']
-            )
+            self.tokenizer, self.args["dataset_path"], self.args["dataset_cache"]
+        )
         self.personality = random.choice(personalities)
         logger.info(
-            f"Selected personality: " +
-            f"{self.tokenizer.decode(chain(*self.personality))}" 
+            f"Selected personality: "
+            + f"{self.tokenizer.decode(chain(*self.personality))}"
         )
         self.is_ready = True
         logger.info("Model initialized and ready to go")
@@ -97,9 +97,7 @@ class ConversationalModel():
     def WriteAvailablePersonalities(self, filename="/tmp/personalities.txt"):
         """Lists and decodes all personalities and writes to filename"""
         personalities = get_dataset_personalities(
-            self.tokenizer,
-            self.args['dataset_path'],
-            self.args['dataset_cache']
+            self.tokenizer, self.args["dataset_path"], self.args["dataset_cache"]
         )
         with open(filename, "w") as out:
             maxFailures = 5
@@ -111,7 +109,7 @@ class ConversationalModel():
                     break
                 try:
                     out.write(self.tokenizer.decode(chain(*p)))
-                    out.write("\n" + ("-"*50) + "\n" )
+                    out.write("\n" + ("-" * 50) + "\n")
                     successes += 1
                 except:
                     logger.warning(f"Couldn't write personality: {p}")
@@ -128,16 +126,15 @@ class ConversationalModel():
         encoded.append(self.tokenizer.encode(query))
         with torch.no_grad():
             out_ids = sample_sequence(
-                self.personality, 
-                encoded,
-                self.tokenizer,
-                self.model,
-                self.args
-                )
+                self.personality, encoded, self.tokenizer, self.model, self.args
+            )
         out_text = self.tokenizer.decode(out_ids, skip_special_tokens=True)
         return out_text
 
-def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_value=-float('Inf')):
+
+def top_filtering(
+    logits, top_k=0, top_p=0.0, threshold=-float("Inf"), filter_value=-float("Inf")
+):
     """ Filter a distribution of logits using top-k, top-p (nucleus) and/or threshold filtering
         Args:
             logits: logits distribution shape (vocabulary size)
@@ -149,7 +146,9 @@ def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_va
             threshold: a minimal threshold to keep logits
         Taken from `interact.py`
     """
-    assert logits.dim() == 1  # Only work for batch size 1 for now - could update but it would obfuscate a bit the code
+    assert (
+        logits.dim() == 1
+    )  # Only work for batch size 1 for now - could update but it would obfuscate a bit the code
     top_k = min(top_k, logits.size(-1))
     if top_k > 0:
         # Remove all tokens with a probability less than the last token in the top-k tokens
@@ -159,7 +158,9 @@ def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_va
     if top_p > 0.0:
         # Compute cumulative probabilities of sorted tokens
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-        cumulative_probabilities = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+        cumulative_probabilities = torch.cumsum(
+            F.softmax(sorted_logits, dim=-1), dim=-1
+        )
 
         # Remove tokens with cumulative probability above the threshold
         sorted_indices_to_remove = cumulative_probabilities > top_p
@@ -183,22 +184,32 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     if current_output is None:
         current_output = []
 
-    for i in range(args['max_length']):
-        instance, sequence = build_input_from_segments(personality, history, current_output, tokenizer, with_eos=False)
+    for i in range(args["max_length"]):
+        instance, sequence = build_input_from_segments(
+            personality, history, current_output, tokenizer, with_eos=False
+        )
 
-        input_ids = torch.tensor(instance['input_ids'], device=args['device']).unsqueeze(0)
-        token_type_ids = torch.tensor(instance["token_type_ids"], device=args['device']).unsqueeze(0)
+        input_ids = torch.tensor(
+            instance["input_ids"], device=args["device"]
+        ).unsqueeze(0)
+        token_type_ids = torch.tensor(
+            instance["token_type_ids"], device=args["device"]
+        ).unsqueeze(0)
 
         logits = model(input_ids, token_type_ids=token_type_ids)
 
-        if "gpt2" == args['model']:
+        if "gpt2" == args["model"]:
             logits = logits[0]
-        logits = logits[0, -1, :] / args['temperature']
-        logits = top_filtering(logits, top_k=args['top_k'], top_p=args['top_p'])
+        logits = logits[0, -1, :] / args["temperature"]
+        logits = top_filtering(logits, top_k=args["top_k"], top_p=args["top_p"])
         probs = F.softmax(logits, dim=-1)
 
-        prev = torch.topk(probs, 1)[1] if args['no_sample'] else torch.multinomial(probs, 1)
-        if i < args['min_length'] and prev.item() in special_tokens_ids:
+        prev = (
+            torch.topk(probs, 1)[1]
+            if args["no_sample"]
+            else torch.multinomial(probs, 1)
+        )
+        if i < args["min_length"] and prev.item() in special_tokens_ids:
             while prev.item() in special_tokens_ids:
                 prev = torch.multinomial(probs, num_samples=1)
 
