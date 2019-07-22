@@ -15,11 +15,7 @@ api = Api()
 api.init_app(app)
 # Do model initialisation
 model = ConversationalModel()
-initializerThread = Thread(
-    target=model.InitModel(),
-    daemon=False,
-    args=[]
-    )
+model.InitModel()
 
 
 @api.route('/ready')
@@ -52,6 +48,3 @@ class Conversation(Resource):
             return {"error": "Missing required fields"}, 501
         except Exception:  # For catching errors in model.Sample
             return {"error": "A server error occurred"}, 501
-
-
-initializerThread.start()
