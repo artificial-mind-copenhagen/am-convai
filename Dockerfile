@@ -41,5 +41,8 @@ RUN mkdir models && \
     cd models/ && \
     tar -xvzf finetuned_chatbot_gpt.tar.gz && \
     rm finetuned_chatbot_gpt.tar.gz
+
+# initalize on build
+RUN python ./initscript.py
     
 CMD gunicorn --timeout 600 --graceful-timeout 600 --bind 0.0.0.0:80 server:app
