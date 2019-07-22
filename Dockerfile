@@ -1,7 +1,4 @@
 FROM tensorflow/tensorflow:latest-gpu-py3
-#FROM ubuntu:18.04
-
-MAINTAINER Loreto Parisi loretoparisi@gmail.com
 
 ########################################  BASE SYSTEM
 # set noninteractive installation# Apt add py3.6
@@ -32,13 +29,6 @@ RUN apt-get install -y \
 RUN ln -fs /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
 
-# Get cuda updated
-#RUN curl http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.1.168-1_amd64.deb > /tmp/cuda-repo.deb && \
-#    dpkg -i /tmp/cuda-repo.deb && \
-#    apt-get update; \
-#    apt-get install -y cuda-libraries-10-1 cuda
-#ENV PATH="/usr/local/cuda-10.1/bin:/usr/local/cuda-10.1/NsightCompute-2019-3:${PATH}"
-
 # transfer-learning-conv-ai
 ENV PYTHONPATH /usr/local/lib/python3.6 
 COPY . ./
@@ -52,4 +42,4 @@ RUN mkdir models && \
     tar -xvzf finetuned_chatbot_gpt.tar.gz && \
     rm finetuned_chatbot_gpt.tar.gz
     
-CMD ["bash"]
+CMD gunicorn --bind 0.0.0.0:80 server:app
