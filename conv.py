@@ -15,9 +15,6 @@ from utils import get_dataset_personalities, download_pretrained_model
 from loguru import logger
 
 
-logger.info(f"Starting conv model with gpu: {torch.cuda.is_available()}")
-
-
 class ConversationalModel:
     """ This will make sure the conversational model is hot and running once
     `InitModel()` has been called. """
@@ -66,33 +63,41 @@ class ConversationalModel:
         self.is_ready = False
 
     def InitModel(self):
+        logger.info(f"Starting conv model with gpu: {torch.cuda.is_available()}")
+
         """ This takes care of loading model/dataset/tokenizing. Can be called
         async or in a seperate thread so as to avoid loooong waiting time"""
+
         # Start with model and download pretrained if neccesary
         if self.args["model_checkpoint"] == "":
+            logger.debug("Downloading pretrained model...")
             self.args["model_checkpoint"] = download_pretrained_model()
         # do model setup and tokenize vocabulary
         tokenizer_class = (
             GPT2Tokenizer if self.args["model"] == "gpt2" else OpenAIGPTTokenizer
         )
+        logger.debug("Opening tokenizer class from pretrained model...")
         self.tokenizer = tokenizer_class.from_pretrained(self.args["model_checkpoint"])
 
         model_class = (
             GPT2LMHeadModel if self.args["model"] == "gpt2" else OpenAIGPTLMHeadModel
         )
+        logger.debug("Opening model class from pretrained model...")
         self.model = model_class.from_pretrained(self.args["model_checkpoint"])
         self.model.to(self.args["device"])
         self.model.eval()
+        logger.debug("Getting dataset personalities...")
         personalities = get_dataset_personalities(
             self.tokenizer, self.args["dataset_path"], self.args["dataset_cache"]
         )
+        logger.debug("Selecting a random personality...")
         self.personality = random.choice(personalities)
         logger.info(
             f"Selected personality: "
             + f"{self.tokenizer.decode(chain(*self.personality))}"
         )
         self.is_ready = True
-        logger.info("Model initialized and ready to go")
+        logger.info("⭐Model initialized and ready to go! ⭐")
 
     def WriteAvailablePersonalities(self, filename="/tmp/personalities.txt"):
         """Lists and decodes all personalities and writes to filename"""
