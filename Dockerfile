@@ -2,7 +2,7 @@ FROM tensorflow/tensorflow:latest-gpu-py3
 
 ########################################  BASE SYSTEM
 # set noninteractive installation# Apt add py3.6
-#ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
 RUN apt-get update && apt-get install -y apt-utils
@@ -42,4 +42,4 @@ RUN mkdir models && \
     tar -xvzf finetuned_chatbot_gpt.tar.gz && \
     rm finetuned_chatbot_gpt.tar.gz
     
-CMD gunicorn --bind 0.0.0.0:80 server:app
+CMD gunicorn --timeout 600 --graceful-timeout 600 --bind 0.0.0.0:80 server:app
