@@ -43,6 +43,7 @@ RUN mkdir models && \
     rm finetuned_chatbot_gpt.tar.gz
 
 # initalize on build
+RUN mkdir /data
 RUN python ./initscript.py
     
 CMD gunicorn --bind 0.0.0.0:80 server:app
