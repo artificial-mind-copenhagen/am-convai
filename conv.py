@@ -38,8 +38,8 @@ class ConversationalModel:
         """
         self.args = {
             "device": "cuda" if torch.cuda.is_available() else "cpu",
-            "dataset_path": "",
-            "dataset_cache": "./dataset_cache",
+            "dataset_path": "/data/dataset",
+            "dataset_cache": "/data/dataset_cache",
             "model": "gpt",
             "model_checkpoint": "",
             "max_history": 2,
