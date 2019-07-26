@@ -11,7 +11,7 @@ Be aware that the docker image takes forever to build (tokenizing the dataset is
 Sending a HTTP GET to `/ready` responds with either:
 
 ```json
-{"success": True}
+{"success": true}
 ```
 
 or
