@@ -45,4 +45,4 @@ RUN mkdir models && \
 # initalize on build
 RUN python ./initscript.py
     
-CMD gunicorn --timeout 600 --graceful-timeout 600 --bind 0.0.0.0:80 server:app
+CMD gunicorn --bind 0.0.0.0:80 server:app
